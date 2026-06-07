@@ -142,7 +142,7 @@ app.get("/api/cards/:uid/status", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 mongoose.connect(MONGO_URI).then(() => {
   app.listen(PORT, () => {
     console.log("\n[API] Server running on port " + PORT);
