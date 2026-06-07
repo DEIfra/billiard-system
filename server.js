@@ -6,7 +6,6 @@ const MONGO_URI = "mongodb+srv://dfrancoisaudace:devDei19!@cluster0.k3hkuuq.mong
 
 const app = express();
 
-// ── CORS — allow everything ───────────────────────────────────
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -17,7 +16,6 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// ── Schema ────────────────────────────────────────────────────
 const cardSchema = new mongoose.Schema({
   uid:        { type: String, required: true, unique: true, uppercase: true },
   owner:      { type: String, default: "Unknown" },
@@ -27,7 +25,6 @@ const cardSchema = new mongoose.Schema({
 });
 const Card = mongoose.model("Card", cardSchema);
 
-// ── GET /api/cards ────────────────────────────────────────────
 app.get("/api/cards", async (req, res) => {
   try {
     const cards = await Card.find();
@@ -37,7 +34,6 @@ app.get("/api/cards", async (req, res) => {
   }
 });
 
-// ── GET /api/cards/:uid ───────────────────────────────────────
 app.get("/api/cards/:uid", async (req, res) => {
   try {
     const uid = req.params.uid.toUpperCase().replace(/:/g, "");
@@ -50,7 +46,6 @@ app.get("/api/cards/:uid", async (req, res) => {
   }
 });
 
-// ── GET /api/cards/:uid/set?tokens=N — ESP32 updates tokens ──
 app.get("/api/cards/:uid/set", async (req, res) => {
   try {
     const uid = req.params.uid.toUpperCase().replace(/:/g, "");
@@ -69,7 +64,6 @@ app.get("/api/cards/:uid/set", async (req, res) => {
   }
 });
 
-// ── POST /api/cards/:uid/set — dashboard sets tokens ─────────
 app.post("/api/cards/:uid/set", async (req, res) => {
   try {
     const uid = req.params.uid.toUpperCase().replace(/:/g, "");
@@ -88,7 +82,6 @@ app.post("/api/cards/:uid/set", async (req, res) => {
   }
 });
 
-// ── POST /api/cards/:uid/topup — add tokens ───────────────────
 app.post("/api/cards/:uid/topup", async (req, res) => {
   try {
     const uid = req.params.uid.toUpperCase().replace(/:/g, "");
@@ -106,7 +99,6 @@ app.post("/api/cards/:uid/topup", async (req, res) => {
   }
 });
 
-// ── POST /api/cards — register card ──────────────────────────
 app.post("/api/cards", async (req, res) => {
   try {
     const { uid, owner, tokens } = req.body;
@@ -122,7 +114,17 @@ app.post("/api/cards", async (req, res) => {
   }
 });
 
-// ── GET /api/cards/:uid/status — GSM online/offline ───────────
+app.delete("/api/cards/:uid", async (req, res) => {
+  try {
+    const uid = req.params.uid.toUpperCase().replace(/:/g, "");
+    await Card.deleteOne({ uid });
+    console.log(`[DELETE] ${uid}`);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get("/api/cards/:uid/status", async (req, res) => {
   try {
     const uid = req.params.uid.toUpperCase().replace(/:/g, "");
@@ -140,18 +142,18 @@ app.get("/api/cards/:uid/status", async (req, res) => {
   }
 });
 
-// ── Start ─────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 mongoose.connect(MONGO_URI).then(() => {
   app.listen(PORT, () => {
     console.log("\n[API] Server running on port " + PORT);
     console.log("[API] Endpoints:");
-    console.log("  GET  /api/cards");
-    console.log("  GET  /api/cards/:uid");
-    console.log("  GET  /api/cards/:uid/set?tokens=N");
-    console.log("  GET  /api/cards/:uid/status?online=true");
-    console.log("  POST /api/cards");
-    console.log("  POST /api/cards/:uid/topup");
-    console.log("  POST /api/cards/:uid/set\n");
+    console.log("  GET    /api/cards");
+    console.log("  GET    /api/cards/:uid");
+    console.log("  GET    /api/cards/:uid/set?tokens=N");
+    console.log("  GET    /api/cards/:uid/status?online=true");
+    console.log("  POST   /api/cards");
+    console.log("  POST   /api/cards/:uid/topup");
+    console.log("  POST   /api/cards/:uid/set");
+    console.log("  DELETE /api/cards/:uid\n");
   });
 }).catch(err => console.error("[DB]", err));
