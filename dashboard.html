@@ -164,7 +164,7 @@ body{font-family:system-ui,sans-serif;background:#f1f5f9;min-height:100vh}
 </div>
 
 <script>
-const API = "https://billiard-system-e236.onrender.com";
+const API = "https://billia-tjg0sv3z.b4a.run";
 let pools = [], topupTarget = null, eventLog = [];
 
 const ST = {
@@ -202,7 +202,30 @@ function render(){
   }
   document.getElementById("grid").innerHTML=pools.map(p=>{
     const s=statusOf(p);const st=ST[s];
-    return`<div class="card"><div class="card-stripe" style="background:${st.stripe}"></div><div class="card-body"><div class="card-head"><div><div class="card-name">${p.owner||"Unknown"}</div><div class="card-uid">${fmtUID(p.uid)}</div><div class="card-time">${p.lastAccess?"Last use: "+new Date(p.lastAccess).toLocaleString():"Never used"}</div></div><span class="pill" style="background:${st.pill};color:${st.pt}"><span class="pdot" style="background:${st.dot}"></span>${st.label}</span></div><hr class="divider"><div class="stat-row"><span class="stat-key">Available tokens</span><span class="token-num" style="color:${tc(p.tokens)}">${p.tokens}</span></div><div class="stat-row"><span class="stat-key">Card UID</span><span class="stat-val" style="font-family:monospace;font-size:11px">${fmtUID(p.uid)}</span></div><div class="stat-row" style="margin-bottom:0"><span class="stat-key">Status</span><span class="stat-val" style="color:${st.stripe}">${p.status==="active"?"GSM Online ✓":p.tokens===0?"No tokens":p.tokens<=2?"Low tokens":"Ready"}</span></div></div><div class="card-footer"><button class="ft-btn primary" onclick="openTopup('${p._id}')">+ Add tokens</button><button class="ft-btn" onclick="syncCard('${p.uid}')">↻ Sync</button><button class="ft-btn danger" onclick="removePool('${p._id}','${p.owner||p.uid}')">✕</button></div></div>`;
+    return`<div class="card">
+      <div class="card-stripe" style="background:${st.stripe}"></div>
+      <div class="card-body">
+        <div class="card-head">
+          <div>
+            <div class="card-name">${p.owner||"Unknown"}</div>
+            <div class="card-uid">${fmtUID(p.uid)}</div>
+            <div class="card-time">${p.lastAccess?"Last use: "+new Date(p.lastAccess).toLocaleString():"Never used"}</div>
+          </div>
+          <span class="pill" style="background:${st.pill};color:${st.pt}">
+            <span class="pdot" style="background:${st.dot}"></span>${st.label}
+          </span>
+        </div>
+        <hr class="divider">
+        <div class="stat-row"><span class="stat-key">Available tokens</span><span class="token-num" style="color:${tc(p.tokens)}">${p.tokens}</span></div>
+        <div class="stat-row"><span class="stat-key">Card UID</span><span class="stat-val" style="font-family:monospace;font-size:11px">${fmtUID(p.uid)}</span></div>
+        <div class="stat-row" style="margin-bottom:0"><span class="stat-key">Status</span><span class="stat-val" style="color:${st.stripe}">${p.status==="active"?"GSM Online ✓":p.tokens===0?"No tokens":p.tokens<=2?"Low tokens":"Ready"}</span></div>
+      </div>
+      <div class="card-footer">
+        <button class="ft-btn primary" onclick="openTopup('${p._id}')">+ Add tokens</button>
+        <button class="ft-btn" onclick="syncCard('${p.uid}')">↻ Sync</button>
+        <button class="ft-btn danger" onclick="removePool('${p._id}','${p.uid}','${p.owner||p.uid}')">✕</button>
+      </div>
+    </div>`;
   }).join("");
 }
 
@@ -254,7 +277,9 @@ async function savePool(){
     if(data.success){
       showMsg("add-msg","Saved!","#dcfce7","#14532d");
       addLog("Table added: "+name+" ("+tokens+" tokens)","#16a34a");
-      document.getElementById("f-name").value="";document.getElementById("f-uid").value="";document.getElementById("f-tokens").value="0";
+      document.getElementById("f-name").value="";
+      document.getElementById("f-uid").value="";
+      document.getElementById("f-tokens").value="0";
       setTimeout(()=>{closeAdd();loadCards();},1200);
     }else{showMsg("add-msg","Error: "+(data.error||"unknown"),"#fee2e2","#7f1d1d");}
   }catch(e){showMsg("add-msg","Failed to reach server","#fee2e2","#7f1d1d");}
@@ -296,7 +321,17 @@ async function confirmTopup(){
   btn.innerHTML="Add tokens";btn.disabled=false;
 }
 
-function removePool(id,name){ if(!confirm("Remove "+name+"?"))return; pools=pools.filter(p=>p._id!==id); addLog("Removed: "+name,"#dc2626"); render(); }
+async function removePool(id, uid, name){
+  if(!confirm("Remove "+name+"?")) return;
+  try{
+    await fetch(API+"/api/cards/"+uid.replace(/:/g,""),{method:"DELETE"});
+    addLog("Removed: "+name,"#dc2626");
+    loadCards();
+  }catch(e){
+    addLog("Error removing: "+e.message,"#dc2626");
+  }
+}
+
 function showMsg(id,msg,bg,color){ const el=document.getElementById(id); el.style.display="block"; el.style.background=bg; el.style.color=color; el.textContent=msg; }
 
 loadCards();
