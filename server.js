@@ -154,6 +154,6 @@ mongoose.connect(MONGO_URI).then(() => {
     console.log("  POST   /api/cards");
     console.log("  POST   /api/cards/:uid/topup");
     console.log("  POST   /api/cards/:uid/set");
-    console.log("  DELETE /api/cards/:uid\n");
+    console.log("  DELETE /api/cgit add server.jsards/:uid\n");
   });
 }).catch(err => console.error("[DB]", err));
