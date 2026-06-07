@@ -5,15 +5,17 @@ const mongoose = require("mongoose");
 const MONGO_URI = "mongodb+srv://dfrancoisaudace:devDei19!@cluster0.k3hkuuq.mongodb.net/gsm_tokens?retryWrites=true&w=majority&appName=Cluster0";
 
 const app = express();
-app.use(express.json());
 
-// Allow CORS for dashboard
+// ── CORS — allow everything ───────────────────────────────────
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Content-Type, ngrok-skip-browser-warning");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "*");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
+
+app.use(express.json());
 
 // ── Schema ────────────────────────────────────────────────────
 const cardSchema = new mongoose.Schema({
@@ -27,8 +29,12 @@ const Card = mongoose.model("Card", cardSchema);
 
 // ── GET /api/cards ────────────────────────────────────────────
 app.get("/api/cards", async (req, res) => {
-  const cards = await Card.find();
-  res.json(cards);
+  try {
+    const cards = await Card.find();
+    res.json(cards);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── GET /api/cards/:uid ───────────────────────────────────────
@@ -102,8 +108,8 @@ app.post("/api/cards/:uid/topup", async (req, res) => {
 
 // ── POST /api/cards — register card ──────────────────────────
 app.post("/api/cards", async (req, res) => {
-  const { uid, owner, tokens } = req.body;
   try {
+    const { uid, owner, tokens } = req.body;
     const card = await Card.findOneAndUpdate(
       { uid: uid.toUpperCase().replace(/:/g, "") },
       { owner, tokens: tokens || 0, status: "idle" },
@@ -135,9 +141,10 @@ app.get("/api/cards/:uid/status", async (req, res) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
 mongoose.connect(MONGO_URI).then(() => {
-  app.listen(3000, () => {
-    console.log("\n[API] Server running on http://localhost:3000");
+  app.listen(PORT, () => {
+    console.log("\n[API] Server running on port " + PORT);
     console.log("[API] Endpoints:");
     console.log("  GET  /api/cards");
     console.log("  GET  /api/cards/:uid");
