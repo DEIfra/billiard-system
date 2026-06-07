@@ -142,9 +142,15 @@ app.get("/api/cards/:uid/status", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 8080;
+// Keep alive ping every 14 minutes
+setInterval(() => {
+  console.log("[PING] Keep-alive");
+}, 14 * 60 * 1000);
+
+const PORT = process.env.PORT || 3000;
+
 mongoose.connect(MONGO_URI).then(() => {
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log("\n[API] Server running on port " + PORT);
     console.log("[API] Endpoints:");
     console.log("  GET    /api/cards");
@@ -154,6 +160,6 @@ mongoose.connect(MONGO_URI).then(() => {
     console.log("  POST   /api/cards");
     console.log("  POST   /api/cards/:uid/topup");
     console.log("  POST   /api/cards/:uid/set");
-    console.log("  DELETE /api/cgit add server.jsards/:uid\n");
+    console.log("  DELETE /api/cards/:uid\n");
   });
 }).catch(err => console.error("[DB]", err));
